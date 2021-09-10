@@ -139,8 +139,7 @@ def calget(book,startd):
 	# startd = date(2015,3,1)
 	result = getclass(book,startd)
 	classes = result[0]
-	weeks = getweeknum(startd)
-	items = classes + weeks
+	items = classes
 	ics = BASE%("".join(items))
 	return (ics,result[1],result[2])
 
@@ -148,7 +147,7 @@ if __name__ == "__main__":
 	import sys
 	path = sys.argv[1]
 	# path = 'class2015.xls'
-	startd = date(2016,2,21)
+	startd = date(2021,9,12)
 	book = xlrd.open_workbook(path)
 	result = calget(book,startd)
 	with open('sca.ics','w') as outf:
