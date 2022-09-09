@@ -42,7 +42,7 @@ def getclass(exlfile,startd):
 	import re
 	numfosucc = 0
 	numoffail = 0
-	#oclass = re.compile(r'(.*)\(.*?；(.*?)；([^；]*?)\)')
+	oclass = re.compile(r'(.*)\((.*)\)')
 	oclaswk = re.compile(r'.*(全|前八|后八|单|双)周')
 	olec = re.compile(r'(.*)\(第(\d+)周\)')
 	other = re.compile(r'(.*)\(([^)]*?)；第(.*)周\)')
@@ -60,15 +60,15 @@ def getclass(exlfile,startd):
 			cell.replace('','')
 			clas = cell.split('\n')
 			for cla in clas:
-				#if oclass.match(cla):
-				if True:
-					# infos = oclass.match(cla)
+				if oclass.match(cla):
+					infos = oclass.match(cla)
+					name = infos.group(1)
 					print(cla, end='')
-					parts = cla.split('；')
+					parts = infos.group(2).split('；')
 					if len(parts)==4:
-						name, cat, claswk, loc = parts
+						claswk, loc = parts[-2:]
 					elif len(parts)==3:
-						name, cats, claswk = parts
+						claswk = parts[-1]
 						loc = 'none'
 					else:
 						numoffail += 1
@@ -137,7 +137,7 @@ if __name__ == "__main__":
 		path = sys.argv[1]
 	except:
 		path = 'table.xls'
-	startd = date(2022,2,20)
+	startd = date(2022,9,12)
 	book = xlrd.open_workbook(path)
 	result = calget(book,startd)
 	with open('sca.ics','w', encoding="utf-8") as outf:
