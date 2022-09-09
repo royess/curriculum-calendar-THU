@@ -4,6 +4,7 @@
 # Author: CareF.LM
 # Version 2.2, 加入对单双周, 前八周, 后八周的支持
 from datetime import *
+from unicodedata import category
 import xlrd
 def newevent(startd,day,start,end,name,loc,\
 	freq = 'WEEKLY', count = 16, dsp = ""):
@@ -41,7 +42,7 @@ def getclass(exlfile,startd):
 	import re
 	numfosucc = 0
 	numoffail = 0
-	oclass = re.compile(r'(.*)\(.*?；(.*?)；([^；]*?)\)')
+	#oclass = re.compile(r'(.*)\(.*?；(.*?)；([^；]*?)\)')
 	oclaswk = re.compile(r'.*(全|前八|后八|单|双)周')
 	olec = re.compile(r'(.*)\(第(\d+)周\)')
 	other = re.compile(r'(.*)\(([^)]*?)；第(.*)周\)')
@@ -59,54 +60,41 @@ def getclass(exlfile,startd):
 			cell.replace('','')
 			clas = cell.split('\n')
 			for cla in clas:
-				if oclass.match(cla):
-					infos = oclass.match(cla)
-					name = infos.group(1)
-					loc = infos.group(3)
-					print(infos.group(2))
-					nw = oclaswk.match(infos.group(2))
-					if(nw == None):
+				#if oclass.match(cla):
+				if True:
+					# infos = oclass.match(cla)
+					print(cla, end='')
+					parts = cla.split('；')
+					if len(parts)==4:
+						name, cat, claswk, loc = parts
+					elif len(parts)==3:
+						name, cats, claswk = parts
+						loc = 'none'
+					else:
 						numoffail += 1
 						continue
-					print(nw.group())
+					nw = oclaswk.match(claswk)
+					if(nw == None):
+						print(' fails')
+						numoffail += 1
+						continue
 					if(nw.group(1) == u'全'):
 						event = newevent(startd,x,sttime[y-2],edtime[y-2],name,loc,dsp = cla)
 					elif(nw.group(1) == u'前八'):
 						event = newevent(startd,x,sttime[y-2],edtime[y-2],name,loc,dsp = cla,count = 8)
 					elif(nw.group(1) == u'后八'):
-						event = newevent(startd+7*7,x,sttime[y-2],edtime[y-2],name,loc,dsp = cla,count = 8)
+						event = newevent(startd+timedelta(days=7*7),x,sttime[y-2],edtime[y-2],name,loc,dsp = cla,count = 8)
 					elif(nw.group(1) == u'双'):
-						event = newevent(startd+7,x,sttime[y-2],edtime[y-2],name,loc,dsp = cla,count = 8,freq = 'DOUBLE')
+						event = newevent(startd+timedelta(days=7),x,sttime[y-2],edtime[y-2],name,loc,dsp = cla,count = 8,freq = 'DOUBLE')
 					elif(nw.group(1) == u'单'):
 						event = newevent(startd,x,sttime[y-2],edtime[y-2],name,loc,dsp = cla,count = 8,freq = 'DOUBLE')
 					else:
+						print(' fails')
 						numoffail += 1
 						continue
 					classes.append(event)
+					print(' succeeds')
 					numfosucc += 1
-				elif olec.match(cla):
-					infos = olec.match(cla)
-					name = infos.group(1)
-					nw = int(infos.group(2))
-					event = newevent(startd,x+(nw-1)*7,sttime[y-2],edtime[y-2],name,"",dsp = cla,freq = '')
-					classes.append(event)
-					numfosucc += 1
-				elif other.match(cla):
-					infos = other.match(cla)
-					name = infos.group(1)
-					loc = infos.group(2)
-					nw = infos.group(3)
-					if nw.isdigit():
-						nw = int(nw)
-						event = newevent(startd,x+(nw-1)*7,sttime[y-2],edtime[y-2],name,loc,dsp = cla,freq = '')
-					elif forwks.match(nw):
-						stw = int(forwks.match(nw).group(1))
-						edw = int(forwks.match(nw).group(2))
-						event = newevent(startd,x+(stw-1)*7,sttime[y-2],edtime[y-2],name,loc,dsp = cla,count = edw-stw+1)
-					classes.append(event)
-					numfosucc += 1
-				else:
-					numoffail += 1
 
 	return (classes,numfosucc,numoffail)
 
@@ -145,11 +133,13 @@ def calget(book,startd):
 
 if __name__ == "__main__":
 	import sys
-	path = sys.argv[1]
-	# path = 'class2015.xls'
-	startd = date(2021,9,12)
+	try:
+		path = sys.argv[1]
+	except:
+		path = 'table.xls'
+	startd = date(2022,2,20)
 	book = xlrd.open_workbook(path)
 	result = calget(book,startd)
-	with open('sca.ics','w') as outf:
+	with open('sca.ics','w', encoding="utf-8") as outf:
 		outf.write(result[0])
 	print('成功添加课程信息%d条, 失败%d条'%(result[1],result[2]))
