@@ -137,7 +137,7 @@ if __name__ == "__main__":
 		path = sys.argv[1]
 	except:
 		path = 'table.xls'
-	startd = date(2022,9,12)
+	startd = date(2022,9,11) # should be a SUNDAY
 	book = xlrd.open_workbook(path)
 	result = calget(book,startd)
 	with open('sca.ics','w', encoding="utf-8") as outf:
